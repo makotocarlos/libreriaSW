@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+
+  webserver:
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - login_api
+      - books_api  # Agregar el servicio books_api
+    networks:
+      - dev_network
+    
+
+  login_api:
+    build:
+      context: ./APIS
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 2GB
+        reservations:
+          cpus: '0.1'
+          memory: 1GB
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./APIS/login:/usr/loginAPI
+    networks:
+      - dev_network
+    environment:
+      - AUTH_AES_SECRET_KEY=${AUTH_AES_SECRET_KEY}
+      - AUTH_JW_SECRET_KEY=${AUTH_JW_SECRET_KEY}
+
+  books_api:  # Nuevo servicio para la API de books
+    build:
+      context: ./APIS
+      dockerfile: Dockerfile  # Aquí también podría ser otro Dockerfile específico para books
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 2GB
+        reservations:
+          cpus: '0.1'
+          memory: 1GB
+    ports:
+      - "3001:3000"  # Ajusta el puerto según corresponda
+    volumes:
+      - ./APIS/books:/usr/booksAPI  # Asegúrate de que los archivos de books estén montados
+    networks:
+      - dev_network
+
+  db_dev:
+    build: 
+      context: ./APIS
+      dockerfile: Dockerfile.postgres
+    container_name: user_db_dev
+
+    environment:
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: user_db_dev
+    
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - ./data/login_data_dev:/var/lib/postgresql/data
+      - ./logs/login_logs:/var/log/postgresql
+      - ./APIS/postgresql.configs/postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - dev_network
+
+  books_db:
+    build:
+      context: ./APIS
+      dockerfile: Dockerfile.postgres
+    container_name: books_db_dev
+
+    environment:
+      POSTGRES_PASSWORD: books12345
+      POSTGRES_DB: books_db_dev
+
+    ports:
+      - "5433:5432"  # Cambia el puerto externo para evitar conflictos
+    volumes:
+      - ./data/books_data_dev:/var/lib/postgresql/data
+      - ./logs/books_logs:/var/log/postgresql
+      - ./APIS/postgresql.configs/postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - dev_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "carlos@guerrero.com"
+      PGADMIN_DEFAULT_PASSWORD: "12345"
+    ports:
+      - "8888:80"
+    volumes:
+      - ./pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - db_dev
+    networks:
+      - dev_network
+    
+
+
+networks:
+  dev_network:
+    driver: bridge
