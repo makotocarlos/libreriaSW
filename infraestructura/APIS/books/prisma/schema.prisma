@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgres"
   url      = env("DATABASE_URL_BOOKS")
 }
 
@@ -13,6 +13,4 @@ model Books {
   title       String
   author      String
   description String
-  publishedAt DateTime
-
 }

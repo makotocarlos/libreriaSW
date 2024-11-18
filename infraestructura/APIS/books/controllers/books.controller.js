@@ -1,14 +1,5 @@
-/**
- * @author carlos
- * @version 1.0.0
- * 
- * Controlador de libros
- * Este archivo define los controladores de libros
- */
-
 const { response, request } = require('express');
 const { PrismaClient } = require('@prisma/client');
-const { EncryptBookData, DecryptBookData } = require('../middlewares/booksCryptoMiddleware');
 
 const prisma = new PrismaClient();
 
@@ -16,16 +7,8 @@ const prisma = new PrismaClient();
 const ShowBooks = async (req = request, res = response) => {
     try {
         const books = await prisma.books.findMany();
-
-        // Descifrar datos sensibles de los libros si es necesario
-        const decryptedBooks = books.map(book => ({
-            ...book,
-            title: DecryptBookData(book.title),
-            description: DecryptBookData(book.description)
-        }));
-
         res.json({
-            books: decryptedBooks
+            books
         });
     } catch (error) {
         res.status(500).json({
@@ -40,19 +23,13 @@ const ShowBooks = async (req = request, res = response) => {
 // Agregar un libro
 const AddBook = async (req = request, res = response) => {
     try {
-        const { title, description, author, publishedYear, userId } = req.body;
-
-        // Cifrar los datos antes de guardarlos
-        const encryptedTitle = EncryptBookData(title);
-        const encryptedDescription = EncryptBookData(description);
+        const { title, description, author } = req.body;
 
         const result = await prisma.books.create({
             data: {
-                title: encryptedTitle,
-                description: encryptedDescription,
+                title, // No encriptado
+                description, // No encriptado
                 author,
-                publishedYear: Number(publishedYear),
-                userId: Number(userId)
             }
         });
 
@@ -87,10 +64,6 @@ const ShowBook = async (req = request, res = response) => {
             });
         }
 
-        // Descifrar datos del libro
-        book.title = DecryptBookData(book.title);
-        book.description = DecryptBookData(book.description);
-
         res.json({
             book
         });
@@ -108,22 +81,16 @@ const ShowBook = async (req = request, res = response) => {
 const EditBook = async (req = request, res = response) => {
     try {
         const { id } = req.params;
-        const { title, description, author, publishedYear, userId } = req.body;
-
-        // Cifrar los datos actualizados
-        const encryptedTitle = EncryptBookData(title);
-        const encryptedDescription = EncryptBookData(description);
+        const { title, description, author } = req.body;
 
         const result = await prisma.books.update({
             where: {
                 id: Number(id)
             },
             data: {
-                title: encryptedTitle,
-                description: encryptedDescription,
+                title, // No encriptado
+                description, // No encriptado
                 author,
-                publishedYear: Number(publishedYear),
-                userId: Number(userId)
             }
         });
 

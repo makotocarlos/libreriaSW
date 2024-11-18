@@ -34,7 +34,7 @@ class Server {
 
     // Define las rutas
     routes() {
-        this.app.use(this.path + 'books', require('../routes/bookRoutes')); // Ruta para libros
+        this.app.use('/books', require('../routes/books.routes'));
     }
 
     // Inicia el servidor

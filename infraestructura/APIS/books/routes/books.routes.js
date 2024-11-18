@@ -1,5 +1,5 @@
 /**
- * @author daferarte
+ * @author carlos
  * @version 1.0.0
  * 
  * Rutas de libros
@@ -10,17 +10,18 @@ const { Router } = require('express');
 
 const router = Router();
 
-// Ejemplo de ruta para obtener todos los libros
-router.get('/', (req, res) => {
-  res.json({
-    message: "Lista de libros",
-    books: [
-      { id: 1, title: "Book 1", author: "Author 1" },
-      { id: 2, title: "Book 2", author: "Author 2" }
-    ]
-  });
-});
+/**
+ * Importando los métodos
+ */
+const { ShowBooks, AddBook, ShowBook, EditBook, DeleteBook } = require('../controllers/books.controller');
 
-// Puedes agregar más rutas aquí, como agregar, eliminar, etc.
+/**
+ * Rutas
+ */
+router.get('/', ShowBooks); // Obtener todos los libros
+router.post('/', AddBook); // Agregar un libro
+router.get('/:id', ShowBook); // Obtener un libro específico
+router.put('/:id', EditBook); // Editar un libro
+router.delete('/:id', DeleteBook); // Eliminar un libro
 
 module.exports = router;
