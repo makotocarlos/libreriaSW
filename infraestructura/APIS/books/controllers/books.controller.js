@@ -23,13 +23,15 @@ const ShowBooks = async (req = request, res = response) => {
 // Agregar un libro
 const AddBook = async (req = request, res = response) => {
     try {
-        const { title, description, author } = req.body;
+        const { title, description, author, imageUrl, price } = req.body;
 
         const result = await prisma.books.create({
             data: {
-                title, // No encriptado
-                description, // No encriptado
+                title,
+                description,
                 author,
+                imageUrl,
+                price, // Añadido precio
             }
         });
 
@@ -81,16 +83,18 @@ const ShowBook = async (req = request, res = response) => {
 const EditBook = async (req = request, res = response) => {
     try {
         const { id } = req.params;
-        const { title, description, author } = req.body;
+        const { title, description, author, imageUrl, price } = req.body;
 
         const result = await prisma.books.update({
             where: {
                 id: Number(id)
             },
             data: {
-                title, // No encriptado
-                description, // No encriptado
+                title,
+                description,
                 author,
+                imageUrl,
+                price, // Actualizado precio
             }
         });
 

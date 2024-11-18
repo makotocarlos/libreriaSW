@@ -12,6 +12,10 @@
 
 const express = require('express');
 const cors = require('cors');
+const app = express();
+
+// Habilitar CORS para todas las rutas
+app.use(cors());
 /**
  * @class Server
  * clase servidor que inicia el servicio de express
