@@ -6,29 +6,29 @@
  * Este archivo define los controladores de usuarios
  */
 
-const {response, request} = require('express');
+const { response, request } = require('express');
 const { PrismaClient } = require('@prisma/client');
-const {Encrypt, Decrypt} = require('../middlewares/validate');
-const {CreateJWT} = require('../middlewares/jwt');
+const { Encrypt, Decrypt } = require('../middlewares/validate');
+const { CreateJWT } = require('../middlewares/jwt');
 
 const prisma = new PrismaClient();
 
-const ShowUsers = async(req=request, res=response)=>{
-
+// Mostrar todos los usuarios
+const ShowUsers = async (req = request, res = response) => {
     const users = await prisma.users.findMany()
-    .catch(err=>{
-        return err.message;
-    }).finally((async ()=>{
-        await prisma.$disconnect();
-    }));
+        .catch(err => {
+            return err.message;
+        }).finally(async () => {
+            await prisma.$disconnect();
+        });
 
     res.json({
         users
     });
 };
 
-const AddUsers = async(req=request, res=response)=>{
-
+// Agregar un nuevo usuario
+const AddUsers = async (req = request, res = response) => {
     let { email, password } = req.body;
 
     password = Encrypt(password);
@@ -38,97 +38,115 @@ const AddUsers = async(req=request, res=response)=>{
             email,
             password
         }
-    }).catch(err=>{
+    }).catch(err => {
         return err.message;
-    }).finally((async ()=>{
+    }).finally(async () => {
         await prisma.$disconnect();
-    }));
+    });
 
     res.json({
         result
     });
 };
 
-const ShowUser = async(req=request, res=response)=>{
-    res.json({
-        "saludo":"soy la respuesta de mostrar usuarios"
+// Mostrar un solo usuario por id
+const ShowUser = async (req = request, res = response) => {
+    const { id } = req.params;  // Obtiene el 'id' desde los parámetros de la solicitud
+
+    const user = await prisma.users.findUnique({
+        where: {
+            id: Number(id)  // Busca el usuario por su 'id'
+        }
+    }).catch(err => {
+        return res.status(500).json({ error: err.message });  // Manejo de errores
+    }).finally(async () => {
+        await prisma.$disconnect();  // Desconecta Prisma después de la operación
     });
+
+    // Si el usuario no existe
+    if (user) {
+        res.json({
+            user  // Devuelve el usuario encontrado
+        });
+    } else {
+        res.status(404).json({
+            msn: "Usuario no encontrado"  // Si no se encuentra el usuario
+        });
+    }
 };
 
-const EditUsers = async(req=request, res=response)=>{
+// Editar un usuario
+const EditUsers = async (req = request, res = response) => {
     const { id } = req.params;
 
     const { email, password } = req.body;
 
     const result = await prisma.users.update({
-        where:{
+        where: {
             id: Number(id)
         },
         data: {
             email,
             password
         }
-    }).catch(err=>{
+    }).catch(err => {
         return err.message;
-    }).finally((async ()=>{
+    }).finally(async () => {
         await prisma.$disconnect();
-    }));
+    });
 
     res.json({
         result
     });
-
 };
 
-const DeleteUsers = async(req=request, res=response)=>{
+// Eliminar un usuario
+const DeleteUsers = async (req = request, res = response) => {
     const { id } = req.params;
 
     const result = await prisma.users.delete({
-        where:{
+        where: {
             id: Number(id)
         }
-    }).catch(err=>{
+    }).catch(err => {
         return err.message;
-    }).finally((async ()=>{
+    }).finally(async () => {
         await prisma.$disconnect();
-    }));
+    });
 
     res.json({
         result
     });
 };
 
-const Login = async(req=request, res=response)=>{
-
+// Iniciar sesión (Login)
+const Login = async (req = request, res = response) => {
     let { email, password } = req.body;
 
     const user = await prisma.users.findFirst({
-        where:{
+        where: {
             email
         }
-    }).catch(err=>{
+    }).catch(err => {
         return err.message;
-    }).finally((async ()=>{
+    }).finally(async () => {
         await prisma.$disconnect();
-    }));
+    });
 
-    if(user){
-        if(Decrypt(user.password)==password){
-            userJWT = CreateJWT(user)
+    if (user) {
+        if (Decrypt(user.password) == password) {
+            userJWT = CreateJWT(user);
             res.json({
                 user,
                 userJWT
-            })
-        }else{
-            res.json({"msn": "Contraseña incorrecta"})
+            });
+        } else {
+            res.json({ "msn": "Contraseña incorrecta" });
         }
-    }else{
-        res.json({"msn": "Usuario no encontrado"})
+    } else {
+        res.json({ "msn": "Usuario no encontrado" });
     }
-    
-
 };
-
 
 module.exports = {
     AddUsers,

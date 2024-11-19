@@ -1,0 +1,47 @@
+FROM node:20
+
+USER root
+
+# Actualiza la lista de paquetes e instala dependencias
+RUN apt-get update && apt-get install -y \
+    wget \
+    nano
+
+# Limpia la caché de npm
+RUN npm cache clean --force
+
+# Actualiza npm a una versión específica
+RUN npm install -g npm@8.12.1
+
+# Instala las dependencias globales necesarias
+RUN npm install -g prisma \
+    && npm install -g cors \
+    && npm install -g dotenv \
+    && npm install -g express \
+    && npm install -g jsonwebtoken \
+    && npm install -g nodemon \
+    && npm install -g @prisma/client
+
+# Crea el directorio de la aplicación
+RUN mkdir -p /usr/ordersAPI
+
+# Establece el directorio de trabajo
+WORKDIR /usr/ordersAPI
+
+# Copia el archivo package.json y package-lock.json
+COPY orders/package*.json ./
+
+# Instala las dependencias del proyecto
+RUN npm install
+
+# Copia el resto de la aplicación
+COPY orders ./ 
+
+# Genera los archivos de Prisma
+RUN npx prisma generate
+
+# Expone el puerto 3001 para la aplicación
+EXPOSE 3001
+
+# Cambia el comando para usar nodemon en lugar de iniciar directamente la app
+CMD ["npx", "nodemon", "app.js"]
