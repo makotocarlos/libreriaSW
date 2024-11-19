@@ -123,28 +123,33 @@ const DeleteUsers = async (req = request, res = response) => {
 const Login = async (req = request, res = response) => {
     let { email, password } = req.body;
 
-    const user = await prisma.users.findFirst({
-        where: {
-            email
-        }
-    }).catch(err => {
-        return err.message;
-    }).finally(async () => {
-        await prisma.$disconnect();
-    });
+    try {
+        const user = await prisma.users.findFirst({
+            where: { email }
+        });
 
-    if (user) {
-        if (Decrypt(user.password) == password) {
-            userJWT = CreateJWT(user);
-            res.json({
-                user,
-                userJWT
-            });
-        } else {
-            res.json({ "msn": "Contraseña incorrecta" });
+        if (!user) {
+            return res.status(404).json({ msg: "Usuario no encontrado" });
         }
-    } else {
-        res.json({ "msn": "Usuario no encontrado" });
+
+        // Desencriptar la contraseña
+        if (Decrypt(user.password) !== password) {
+            return res.status(400).json({ msg: "Contraseña incorrecta" });
+        }
+
+        // Crear JWT
+        const userJWT = CreateJWT(user);
+
+        // Asegurarnos de que el id esté accesible en la respuesta
+        res.json({
+            user: { id: user.id, email: user.email }, // Solo el id y email
+            userJWT
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ msg: "Error interno del servidor" });
+    } finally {
+        await prisma.$disconnect();
     }
 };
 

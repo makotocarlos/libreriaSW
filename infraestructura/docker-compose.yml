@@ -2,17 +2,34 @@ version: "3.8"
 
 services:
 
+  # Servicio del Frontend
+  frontend:
+    build:
+      context: ./APIS  # Ajusta la ruta de tu frontend si es necesario
+      dockerfile: Dockerfile.front
+    ports:
+      - "3003:3000"  # Mapea el puerto 3003 del contenedor al puerto 3003 en tu máquina local
+    depends_on:
+      - login_api
+      - books_api
+      - orders_api
+    networks:
+      - dev_network
+    environment:
+      - PORT=3000
+
+  # Servicio del Webserver
   webserver:
     build: ./nginx
     ports:
       - "80:80"
     depends_on:
       - login_api
-      - books_api  # Agregar el servicio books_api
+      - books_api
     networks:
       - dev_network
-    
 
+  # Servicio de la API de Login
   login_api:
     build:
       context: ./APIS
@@ -32,14 +49,12 @@ services:
       - ./APIS/login:/usr/loginAPI
     networks:
       - dev_network
-    
 
-   
-
-  books_api:  # Nuevo servicio para la API de books
+  # Servicio de la API de Books
+  books_api:
     build:
       context: ./APIS
-      dockerfile: Dockerfile.books  # Aquí también podría ser otro Dockerfile específico para books
+      dockerfile: Dockerfile.books
     deploy:
       replicas: 1
       resources:
@@ -50,19 +65,17 @@ services:
           cpus: '0.1'
           memory: 1GB
     ports:
-      - "3001:3001"  # Ajusta el puerto según corresponda
+      - "3001:3001"
     volumes:
-      - ./APIS/books:/usr/booksAPI  # Asegúrate de que los archivos de books estén montados
+      - ./APIS/books:/usr/booksAPI
     networks:
       - dev_network
 
-
-
-
-  orders_api:  # Nuevo servicio para la API de órdenes
+  # Servicio de la API de Orders
+  orders_api:
     build:
       context: ./APIS
-      dockerfile: Dockerfile.orders  # Especifica el Dockerfile para orders
+      dockerfile: Dockerfile.orders
     deploy:
       replicas: 1
       resources:
@@ -73,26 +86,23 @@ services:
           cpus: '0.1'
           memory: 1GB
     ports:
-      - "3002:3002"  # Ajusta el puerto según corresponda
+      - "3002:3002"
     volumes:
-      - ./APIS/orders:/usr/ordersAPI  # Asegúrate de que los archivos de orders estén montados
+      - ./APIS/orders:/usr/ordersAPI
     networks:
       - dev_network
-  
 
+  # Base de Datos para Login
   db_dev:
-    build: 
+    build:
       context: ./APIS
       dockerfile: Dockerfile.postgres
     container_name: user_db_dev
-
     environment:
       POSTGRES_PASSWORD: 12345
       POSTGRES_DB: user_db_dev
-    
     ports:
       - "5432:5432"
-    
     volumes:
       - ./data/login_data_dev:/var/lib/postgresql/data
       - ./logs/login_logs:/var/log/postgresql
@@ -100,18 +110,17 @@ services:
     networks:
       - dev_network
 
+  # Base de Datos para Books
   books_db:
     build:
       context: ./APIS
       dockerfile: Dockerfile.postgres
     container_name: books_db_dev
-
     environment:
       POSTGRES_PASSWORD: books12345
       POSTGRES_DB: books_db_dev
-
     ports:
-      - "5433:5432"  # Cambia el puerto externo para evitar conflictos
+      - "5433:5432"
     volumes:
       - ./data/books_data_dev:/var/lib/postgresql/data
       - ./logs/books_logs:/var/log/postgresql
@@ -119,29 +128,25 @@ services:
     networks:
       - dev_network
 
-
+  # Base de Datos para Orders
   orders_db:
     build:
       context: ./APIS
       dockerfile: Dockerfile.postgres
     container_name: orders_db_dev
-
     environment:
       POSTGRES_PASSWORD: orders12345
       POSTGRES_DB: orders_db_dev
-
     ports:
-      - "5434:5432"  # Cambia el puerto externo para evitar conflictos con otros servicios
-
+      - "5434:5432"
     volumes:
-      - ./data/orders_data_dev:/var/lib/postgresql/data  # Asegúrate de que el directorio `orders_data_dev` exista
-      - ./logs/orders_logs:/var/log/postgresql           # Monta el directorio de logs de PostgreSQL
-      - ./APIS/postgresql.configs/postgresql.conf:/etc/postgresql/postgresql.conf  # Si tienes una configuración personalizada
-
+      - ./data/orders_data_dev:/var/lib/postgresql/data
+      - ./logs/orders_logs:/var/log/postgresql
+      - ./APIS/postgresql.configs/postgresql.conf:/etc/postgresql/postgresql.conf
     networks:
       - dev_network
 
-
+  # Servicio pgAdmin
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
@@ -156,8 +161,6 @@ services:
       - db_dev
     networks:
       - dev_network
-    
-
 
 networks:
   dev_network:
